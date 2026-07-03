@@ -1,0 +1,29 @@
+export type Status = 'frequent' | 'longterm' | 'archived'
+
+export interface Person {
+    id: string
+    name: string
+    status: Status
+    created_at: string
+}
+
+export interface Entry {
+    id: string
+    person_id: string
+    date: string
+    points: string[]
+    created_at: string
+}
+
+export interface Tick {
+    id: string
+    person_id: string
+    entry_date: string
+    point_index: number
+    created_at: string
+}
+
+export interface PersonWithEntries extends Person {
+    entries: Entry[]
+    ticks: Tick[]
+}
