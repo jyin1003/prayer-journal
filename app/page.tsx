@@ -1,115 +1,102 @@
 'use client'
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase'
+import { PersonWithEntries, Status } from '@/lib/types'
+import { getPrayerCandidates, getCatchupPeople } from '@/lib/logic'
+import PersonCard from '@/components/PersonCard'
+import Modal, { ModalState } from '@/components/Modal'
 
-export default function LoginPage() {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [mode, setMode] = useState<'login' | 'signup'>('login')
-    const [error, setError] = useState('')
-    const [loading, setLoading] = useState(false)
-    const [magicSent, setMagicSent] = useState(false)
+export default function Dashboard() {
+    const [people, setPeople] = useState<PersonWithEntries[]>([])
+    const [tab, setTab] = useState<'today' | 'everyone'>('today')
+    const [modal, setModal] = useState<ModalState | null>(null)
+    const [loading, setLoading] = useState(true)
     const router = useRouter()
     const supabase = createClient()
 
-    async function handleSubmit() {
-        setError('')
-        setLoading(true)
-        if (mode === 'login') {
-            const { error } = await supabase.auth.signInWithPassword({ email, password })
-            if (error) setError(error.message)
-            else router.push('/')
-        } else {
-            const { error } = await supabase.auth.signUp({ email, password })
-            if (error) setError(error.message)
-            else router.push('/')
-        }
+    async function load() {
+        const res = await fetch('/api/people')
+        if (res.ok) setPeople(await res.json())
         setLoading(false)
     }
+    useEffect(() => { load() }, [])
 
-    async function handleMagicLink() {
-        if (!email) { setError('Enter your email first'); return }
-        setLoading(true)
-        const { error } = await supabase.auth.signInWithOtp({ email })
-        if (error) setError(error.message)
-        else setMagicSent(true)
-        setLoading(false)
+    async function handleTick(personId: string, entryDate: string, pointIdx: number, ticked: boolean) {
+        await fetch('/api/ticks', { method: ticked ? 'DELETE' : 'POST', body: JSON.stringify({ person_id: personId, entry_date: entryDate, point_index: pointIdx }) })
+        load()
+    }
+    async function handleAddPerson(name: string, status: Status, points: string[]) {
+        await fetch('/api/people', { method: 'POST', body: JSON.stringify({ name, status, points }) })
+        load()
+    }
+    async function handleAddPoints(personId: string, points: string[]) {
+        await fetch('/api/entries', { method: 'POST', body: JSON.stringify({ person_id: personId, points }) })
+        load()
+    }
+    async function handleEditPerson(personId: string, name: string, status: Status) {
+        await fetch('/api/people', { method: 'PATCH', body: JSON.stringify({ id: personId, name, status }) })
+        load()
+    }
+    async function handleDeletePerson(personId: string) {
+        await fetch('/api/people', { method: 'DELETE', body: JSON.stringify({ id: personId }) })
+        load()
+    }
+    async function handleSignOut() {
+        await supabase.auth.signOut()
+        router.push('/login')
     }
 
-    if (magicSent) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-                <div className="bg-white rounded-2xl border border-gray-200 p-8 w-full max-w-sm text-center">
-                    <div className="text-3xl mb-4">✉️</div>
-                    <h1 className="text-lg font-medium mb-2">Check your email</h1>
-                    <p className="text-sm text-gray-500">We sent a magic link to <strong>{email}</strong>. Click it to sign in.</p>
-                </div>
-            </div>
-        )
-    }
+    if (loading) return <div className="p-6 text-sm text-gray-400">Loading…</div>
+
+    const candidates = getPrayerCandidates(people)
+    const catchup = getCatchupPeople(people)
+    const findPerson = (id: string) => people.find(p => p.id === id)!
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div className="bg-white rounded-2xl border border-gray-200 p-8 w-full max-w-sm">
-                <h1 className="text-xl font-medium mb-1">Prayer tracker</h1>
-                <p className="text-sm text-gray-500 mb-6">{mode === 'login' ? 'Sign in to your account' : 'Create your account'}</p>
-
-                <div className="space-y-3">
-                    <div>
-                        <label className="text-xs text-gray-500 block mb-1">Email</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-                            placeholder="you@example.com"
-                            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs text-gray-500 block mb-1">Password</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-                            placeholder="••••••••"
-                            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                        />
-                    </div>
-                </div>
-
-                {error && <p className="text-red-500 text-xs mt-3">{error}</p>}
-
-                <button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2.5 text-sm font-medium disabled:opacity-50"
-                >
-                    {loading ? 'Loading…' : mode === 'login' ? 'Sign in' : 'Create account'}
-                </button>
-
-                <div className="relative my-4">
-                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100" /></div>
-                    <div className="relative flex justify-center"><span className="bg-white px-2 text-xs text-gray-400">or</span></div>
-                </div>
-
-                <button
-                    onClick={handleMagicLink}
-                    disabled={loading}
-                    className="w-full border border-gray-200 hover:bg-gray-50 rounded-lg py-2.5 text-sm text-gray-600 disabled:opacity-50"
-                >
-                    Send magic link
-                </button>
-
-                <p className="text-center text-xs text-gray-400 mt-4">
-                    {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
-                    <button className="text-blue-500" onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError('') }}>
-                        {mode === 'login' ? 'Sign up' : 'Sign in'}
-                    </button>
-                </p>
+        <div className="max-w-lg mx-auto p-4">
+            <div className="flex items-center justify-between mb-4">
+                <h1 className="text-lg font-medium">Prayer Tracker</h1>
+                <button onClick={handleSignOut} className="text-xs text-gray-400">Sign out</button>
             </div>
+
+            <div className="flex gap-2 mb-4">
+                <button onClick={() => setTab('today')} className={`text-sm px-3 py-1.5 rounded-lg ${tab === 'today' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>Today</button>
+                <button onClick={() => setTab('everyone')} className={`text-sm px-3 py-1.5 rounded-lg ${tab === 'everyone' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>Everyone</button>
+                <button onClick={() => setModal({ type: 'addPerson' })} className="ml-auto text-sm px-3 py-1.5 rounded-lg bg-gray-100">+ Add person</button>
+            </div>
+
+            {tab === 'today' && (
+                <>
+                    {candidates.map(({ person, isRandom }) => (
+                        <PersonCard key={person.id} person={person} isRandom={isRandom} onTick={handleTick}
+                            onAddPoints={id => setModal({ type: 'addPoints', person: findPerson(id) })}
+                            onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
+                    ))}
+                    {catchup.length > 0 && (
+                        <>
+                            <h2 className="text-xs font-medium text-gray-400 mt-6 mb-2">Time to catch up</h2>
+                            {catchup.map(({ person }) => (
+                                <PersonCard key={person.id} person={person} onTick={handleTick}
+                                    onAddPoints={id => setModal({ type: 'addPoints', person: findPerson(id) })}
+                                    onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
+                            ))}
+                        </>
+                    )}
+                </>
+            )}
+
+            {tab === 'everyone' && people.map(person => (
+                <PersonCard key={person.id} person={person} onTick={handleTick}
+                    onAddPoints={id => setModal({ type: 'addPoints', person: findPerson(id) })}
+                    onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
+            ))}
+
+            {modal && (
+                <Modal modal={modal} people={people} onClose={() => setModal(null)}
+                    onAddPerson={handleAddPerson} onAddPoints={handleAddPoints}
+                    onEditPerson={handleEditPerson} onDeletePerson={handleDeletePerson} />
+            )}
         </div>
     )
 }
