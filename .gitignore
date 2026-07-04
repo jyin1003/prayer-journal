@@ -1,4 +1,4 @@
 .venv/
 .next/
-.env
+.env.local
 node_modules/
