@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-    title: 'Prayer Tracker',
+    title: 'Pocket Prayer',
     description: 'Keep track of your prayer points',
     manifest: '/manifest.json',
     icons: {
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     appleWebApp: {
         capable: true,
         statusBarStyle: 'default',
-        title: 'Prayer Tracker',
+        title: 'Pocket Prayer',
     },
 }
 

@@ -56,7 +56,7 @@ export default function Dashboard() {
     return (
         <div className="max-w-lg mx-auto p-4">
             <div className="flex items-center justify-between mb-4">
-                <h1 className="text-lg font-medium">Prayer Tracker</h1>
+                <h1 className="text-lg font-medium">Pocket Prayer</h1>
                 <button onClick={handleSignOut} className="text-xs text-gray-400">Sign out</button>
             </div>
 

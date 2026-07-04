@@ -57,7 +57,7 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div className="bg-white rounded-2xl border border-gray-200 p-8 w-full max-w-sm">
-                <h1 className="text-xl font-medium mb-1">Prayer tracker</h1>
+                <h1 className="text-xl font-medium mb-1">Pocket Prayer</h1>
                 <p className="text-sm text-gray-500 mb-6">{mode === 'login' ? 'Sign in to your account' : 'Create your account'}</p>
 
                 <div className="space-y-3">

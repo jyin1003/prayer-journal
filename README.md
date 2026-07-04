@@ -1,4 +1,4 @@
-# Prayer Journal
+# Pocket Prayer
 
 ## Getting Started
 1. Activate virtual environment
@@ -23,7 +23,21 @@
     npm run dev
     ```
 
-## Setup Backend
+## Setup Stack
+**Backend**
 1. Create a Supabase project
-2. Paste your Supabase URL and public API key into the `.env` file
+2. Paste your Supabase URL and public API key into the `.env.local` file
 3. Run `supabase/schema.sql` in the Supabase project's SQL editor
+
+ **Deployment**
+ 1. Add this codebase to a GitHub repository
+ 2. Link this repository when creating a Vercel project
+ 3. Add your keys from the `.env.local` file to the Vercel project's environment variables
+ 4. Deploy
+
+ ## To Do
+ - header at top: centred in a stack is the logo, then the small sign out part
+- faster response after ticking
+- body of the page underneath the header has two tabs: prayers and people
+- prayers tab: top section is the top three and then the bottom is the catchup section
+- people tab: search bar at the top that brings up people card and to the right is an add button circle with just a plus to add people. on the card, it should have what you currently have but minus the prayer points section. for the add and edit icons, wrap them in circle so its easier to press. when i click anywhere else on the person card, it should bring up their hisotry of prayer points in a scrollable modal
