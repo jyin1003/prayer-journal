@@ -5,6 +5,10 @@ export const metadata: Metadata = {
     title: 'Prayer Tracker',
     description: 'Keep track of your prayer points',
     manifest: '/manifest.json',
+    icons: {
+        apple: '/icon-192.png',
+        icon: '/icon-512.png',
+    },
     appleWebApp: {
         capable: true,
         statusBarStyle: 'default',
