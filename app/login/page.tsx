@@ -17,13 +17,15 @@ export default function LoginPage() {
         setError('')
         setLoading(true)
         if (mode === 'login') {
-            const { error } = await supabase.auth.signInWithPassword({ email, password })
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+            console.log('login result:', { data, error })
             if (error) setError(error.message)
-            else router.push('/')
+            else {
+                console.log('redirecting now...')
+                window.location.href = '/'
+            }
         } else {
-            const { error } = await supabase.auth.signUp({ email, password })
-            if (error) setError(error.message)
-            else router.push('/')
+            // ...unchanged
         }
         setLoading(false)
     }

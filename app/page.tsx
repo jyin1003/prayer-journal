@@ -44,7 +44,7 @@ export default function Dashboard() {
     }
     async function handleSignOut() {
         await supabase.auth.signOut()
-        router.push('/login')
+        window.location.href = '/login'
     }
 
     if (loading) return <div className="p-6 text-sm text-gray-400">Loading…</div>
