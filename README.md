@@ -26,3 +26,4 @@
 ## Setup Backend
 1. Create a Supabase project
 2. Paste your Supabase URL and public API key into the `.env` file
+3. Run `supabase/schema.sql` in the Supabase project's SQL editor
