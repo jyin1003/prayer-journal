@@ -36,6 +36,7 @@
  4. Deploy
 
  ## To Do
+- glitch of name rearranging on random clicks (modal or dark light mode toggle)
 - faster response after ticking
 - body of the page underneath the header has two tabs: prayers and people
 - prayers tab: top section is the top three and then the bottom is the catchup section
