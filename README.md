@@ -38,6 +38,3 @@
  ## To Do
 - glitch of name rearranging on random clicks (modal or dark light mode toggle)
 - faster response after ticking
-- body of the page underneath the header has two tabs: prayers and people
-- prayers tab: top section is the top three and then the bottom is the catchup section
-- people tab: search bar at the top that brings up people card and to the right is an add button circle with just a plus to add people. on the card, it should have what you currently have but minus the prayer points section. for the add and edit icons, wrap them in circle so its easier to press. when i click anywhere else on the person card, it should bring up their hisotry of prayer points in a scrollable modal

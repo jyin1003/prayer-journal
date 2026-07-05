@@ -6,11 +6,14 @@ import { PersonWithEntries, Status } from '@/lib/types'
 import { getPrayerCandidates, getCatchupPeople } from '@/lib/logic'
 import PersonCard from '@/components/PersonCard'
 import Modal, { ModalState } from '@/components/Modal'
+import HistoryModal from '@/components/HistoryModal'
 
 export default function Dashboard() {
     const [people, setPeople] = useState<PersonWithEntries[]>([])
-    const [tab, setTab] = useState<'today' | 'everyone'>('today')
+    const [tab, setTab] = useState<'prayers' | 'people'>('prayers')
     const [modal, setModal] = useState<ModalState | null>(null)
+    const [historyPersonId, setHistoryPersonId] = useState<string | null>(null)
+    const [search, setSearch] = useState('')
     const [loading, setLoading] = useState(true)
     const router = useRouter()
     const supabase = createClient()
@@ -64,13 +67,15 @@ export default function Dashboard() {
     }
 
     if (loading) return (
-        <div className="min-h-screen flex items-center justify-center text-sm text-gray-400 dark:bg-gray-900 dark:text-gray-500">
+        <div className="min-h-screen flex items-center justify-center text-sm text-gray-400">
             Loading…
         </div>
     )
     const candidates = getPrayerCandidates(people)
     const catchup = getCatchupPeople(people)
     const findPerson = (id: string) => people.find(p => p.id === id)!
+    const filteredPeople = people.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+    const historyPerson = historyPersonId ? findPerson(historyPersonId) : null
 
     return (
         <div className="max-w-lg mx-auto p-4">
@@ -80,83 +85,94 @@ export default function Dashboard() {
                     alt="Pocket Prayer"
                     className="h-20 w-20 mb-1"
                 />
-                <button
-                    onClick={toggleTheme}
-                    aria-label="Toggle dark mode"
-                    className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 transition-colors mb-1"
-                >
-                    {theme === 'dark' ? (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="5" />
-                            <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                            <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
-                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                        </svg>
-                    ) : (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                        </svg>
-                    )}
-                </button>
                 <button onClick={handleSignOut} className="text-xs text-gray-400">Sign out</button>
             </div>
 
             <div className="flex gap-2 mb-4">
                 <button
-                    onClick={() => setTab('today')}
-                    className={`text-sm font-semibold px-3 py-1.5 rounded-lg ${tab === 'today' ? 'bg-highlight text-gray-800' : 'bg-gray-100 dark:bg-gray-800 dark:text-gray-200'
-                        }`}
+                    onClick={() => setTab('prayers')}
+                    className={`text-sm font-semibold px-3 py-1.5 rounded-lg ${tab === 'prayers' ? 'bg-highlight text-gray-800' : 'bg-gray-100'}`}
                 >
-                    Today
+                    Prayers
                 </button>
 
                 <button
-                    onClick={() => setTab('everyone')}
-                    className={`text-sm font-semibold px-3 py-1.5 rounded-lg ${tab === 'everyone' ? 'bg-highlight text-gray-800' : 'bg-gray-100 dark:bg-gray-800 dark:text-gray-200'
-                        }`}
+                    onClick={() => setTab('people')}
+                    className={`text-sm font-semibold px-3 py-1.5 rounded-lg ${tab === 'people' ? 'bg-highlight text-gray-800' : 'bg-gray-100'}`}
                 >
-                    Everyone
+                    People
                 </button>
 
-                <button
-                    onClick={() => setModal({ type: 'addPerson' })}
-                    className="ml-auto text-sm font-semibold px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 dark:text-gray-200"
-                >
-                    + Add person
-                </button>
+                {tab === 'prayers' && (
+                    <button
+                        onClick={() => setModal({ type: 'addPerson' })}
+                        className="ml-auto text-sm font-semibold px-3 py-1.5 rounded-lg bg-gray-100"
+                    >
+                        + Add person
+                    </button>
+                )}
             </div>
 
-            {tab === 'today' && (
+            {tab === 'prayers' && (
                 <>
                     {candidates.map(({ person, isRandom }) => (
                         <PersonCard key={person.id} person={person} isRandom={isRandom} onTick={handleTick}
                             onAddPoints={id => setModal({ type: 'addPoints', person: findPerson(id) })}
                             onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
                     ))}
-                    {catchup.length > 0 && (
-                        <>
-                            <h2 className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-6 mb-2">Time to catch up</h2>
-                            {catchup.map(({ person }) => (
-                                <PersonCard key={person.id} person={person} onTick={handleTick}
-                                    onAddPoints={id => setModal({ type: 'addPoints', person: findPerson(id) })}
-                                    onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
-                            ))}
-                        </>
+
+                    <h2 className="text-xs font-medium text-gray-400 mt-6 mb-2">Time to catch up</h2>
+                    {catchup.length > 0 ? (
+                        catchup.map(({ person }) => (
+                            <PersonCard key={person.id} person={person} onTick={handleTick}
+                                onAddPoints={id => setModal({ type: 'addPoints', person: findPerson(id) })}
+                                onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
+                        ))
+                    ) : (
+                        <p className="text-sm text-gray-400">None so far :)</p>
                     )}
                 </>
             )}
 
-            {tab === 'everyone' && people.map(person => (
-                <PersonCard key={person.id} person={person} onTick={handleTick}
-                    onAddPoints={id => setModal({ type: 'addPoints', person: findPerson(id) })}
-                    onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
-            ))}
+            {tab === 'people' && (
+                <>
+                    <div className="flex items-center gap-2 mb-4">
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            placeholder="Search people…"
+                            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                        />
+                        <button
+                            onClick={() => setModal({ type: 'addPerson' })}
+                            className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 text-white"
+                            aria-label="Add person"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                        </button>
+                    </div>
+
+                    {filteredPeople.map(person => (
+                        <PersonCard key={person.id} person={person} variant="compact"
+                            onAddPoints={id => setModal({ type: 'addPoints', person: findPerson(id) })}
+                            onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })}
+                            onCardClick={setHistoryPersonId} />
+                    ))}
+                    {filteredPeople.length === 0 && (
+                        <p className="text-sm text-gray-400">No people found</p>
+                    )}
+                </>
+            )}
 
             {modal && (
                 <Modal modal={modal} people={people} onClose={() => setModal(null)}
                     onAddPerson={handleAddPerson} onAddPoints={handleAddPoints}
                     onEditPerson={handleEditPerson} onDeletePerson={handleDeletePerson} />
+            )}
+
+            {historyPerson && (
+                <HistoryModal person={historyPerson} onClose={() => setHistoryPersonId(null)} />
             )}
         </div>
     )
