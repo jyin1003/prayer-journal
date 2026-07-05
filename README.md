@@ -36,7 +36,6 @@
  4. Deploy
 
  ## To Do
- - header at top: centred in a stack is the logo, then the small sign out part
 - faster response after ticking
 - body of the page underneath the header has two tabs: prayers and people
 - prayers tab: top section is the top three and then the bottom is the catchup section

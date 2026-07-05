@@ -47,23 +47,45 @@ export default function Dashboard() {
         window.location.href = '/login'
     }
 
-    if (loading) return <div className="p-6 text-sm text-gray-400">Loading…</div>
-
+    if (loading) return (
+        <div className="min-h-screen flex items-center justify-center text-sm text-gray-400">
+            Loading…
+        </div>
+    )
     const candidates = getPrayerCandidates(people)
     const catchup = getCatchupPeople(people)
     const findPerson = (id: string) => people.find(p => p.id === id)!
 
     return (
         <div className="max-w-lg mx-auto p-4">
-            <div className="flex items-center justify-between mb-4">
-                <h1 className="text-lg font-medium">Pocket Prayer</h1>
+            <div className="flex flex-col items-center mb-4">
+                <img src="../logo_full-512.png" alt="Pocket Prayer" className="h-20 w-20 mb-1" />
                 <button onClick={handleSignOut} className="text-xs text-gray-400">Sign out</button>
             </div>
 
             <div className="flex gap-2 mb-4">
-                <button onClick={() => setTab('today')} className={`text-sm px-3 py-1.5 rounded-lg ${tab === 'today' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>Today</button>
-                <button onClick={() => setTab('everyone')} className={`text-sm px-3 py-1.5 rounded-lg ${tab === 'everyone' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>Everyone</button>
-                <button onClick={() => setModal({ type: 'addPerson' })} className="ml-auto text-sm px-3 py-1.5 rounded-lg bg-gray-100">+ Add person</button>
+                <button
+                    onClick={() => setTab('today')}
+                    className={`text-sm font-semibold px-3 py-1.5 rounded-lg ${tab === 'today' ? 'bg-highlight text-gray-800' : 'bg-gray-100'
+                        }`}
+                >
+                    Today
+                </button>
+
+                <button
+                    onClick={() => setTab('everyone')}
+                    className={`text-sm font-semibold px-3 py-1.5 rounded-lg ${tab === 'everyone' ? 'bg-highlight text-gray-800' : 'bg-gray-100'
+                        }`}
+                >
+                    Everyone
+                </button>
+
+                <button
+                    onClick={() => setModal({ type: 'addPerson' })}
+                    className="ml-auto text-sm font-semibold px-3 py-1.5 rounded-lg bg-gray-100"
+                >
+                    + Add person
+                </button>
             </div>
 
             {tab === 'today' && (

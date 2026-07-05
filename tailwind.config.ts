@@ -9,6 +9,7 @@ const config: Config = {
         extend: {
             colors: {
                 primary: '#378ADD',
+                highlight: 'var(--color-highlight)',
             },
             fontFamily: {
                 sans: ['Inter', 'system-ui', 'sans-serif'],
