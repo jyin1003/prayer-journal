@@ -67,7 +67,7 @@ export default function Dashboard() {
     }
 
     if (loading) return (
-        <div className="min-h-screen flex items-center justify-center text-sm text-gray-400">
+        <div className="min-h-screen flex items-center justify-center text-sm text-gray-400 dark:bg-gray-900 dark:text-gray-500">
             Loading…
         </div>
     )
@@ -85,20 +85,39 @@ export default function Dashboard() {
                     alt="Pocket Prayer"
                     className="h-20 w-20 mb-1"
                 />
+                <button
+                    onClick={toggleTheme}
+                    aria-label="Toggle dark mode"
+                    className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 transition-colors mb-1"
+                >
+                    {theme === 'dark' ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="5" />
+                            <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                            <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                        </svg>
+                    ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                        </svg>
+                    )}
+                </button>
                 <button onClick={handleSignOut} className="text-xs text-gray-400">Sign out</button>
             </div>
 
             <div className="flex gap-2 mb-4">
                 <button
                     onClick={() => setTab('prayers')}
-                    className={`text-sm font-semibold px-3 py-1.5 rounded-lg ${tab === 'prayers' ? 'bg-highlight text-gray-800' : 'bg-gray-100'}`}
+                    className={`text-sm font-semibold px-3 py-1.5 rounded-lg ${tab === 'prayers' ? 'bg-highlight text-gray-800' : 'bg-gray-100 dark:bg-gray-800 dark:text-gray-200'}`}
                 >
                     Prayers
                 </button>
 
                 <button
                     onClick={() => setTab('people')}
-                    className={`text-sm font-semibold px-3 py-1.5 rounded-lg ${tab === 'people' ? 'bg-highlight text-gray-800' : 'bg-gray-100'}`}
+                    className={`text-sm font-semibold px-3 py-1.5 rounded-lg ${tab === 'people' ? 'bg-highlight text-gray-800' : 'bg-gray-100 dark:bg-gray-800 dark:text-gray-200'}`}
                 >
                     People
                 </button>
@@ -106,7 +125,7 @@ export default function Dashboard() {
                 {tab === 'prayers' && (
                     <button
                         onClick={() => setModal({ type: 'addPerson' })}
-                        className="ml-auto text-sm font-semibold px-3 py-1.5 rounded-lg bg-gray-100"
+                        className="ml-auto text-sm font-semibold px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 dark:text-gray-200"
                     >
                         + Add person
                     </button>
@@ -121,7 +140,7 @@ export default function Dashboard() {
                             onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
                     ))}
 
-                    <h2 className="text-xs font-medium text-gray-400 mt-6 mb-2">Time to catch up</h2>
+                    <h2 className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-6 mb-2">Time to catch up</h2>
                     {catchup.length > 0 ? (
                         catchup.map(({ person }) => (
                             <PersonCard key={person.id} person={person} onTick={handleTick}
@@ -129,7 +148,7 @@ export default function Dashboard() {
                                 onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
                         ))
                     ) : (
-                        <p className="text-sm text-gray-400">None so far :)</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-500">None so far :)</p>
                     )}
                 </>
             )}
@@ -142,7 +161,7 @@ export default function Dashboard() {
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             placeholder="Search people…"
-                            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                            className="flex-1 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
                         />
                         <button
                             onClick={() => setModal({ type: 'addPerson' })}
@@ -160,7 +179,7 @@ export default function Dashboard() {
                             onCardClick={setHistoryPersonId} />
                     ))}
                     {filteredPeople.length === 0 && (
-                        <p className="text-sm text-gray-400">No people found</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-500">No people found</p>
                     )}
                 </>
             )}
