@@ -38,3 +38,4 @@
  ## To Do
 - glitch of name rearranging on random clicks (modal or dark light mode toggle)
 - faster response after ticking
+- fix dark logo

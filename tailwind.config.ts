@@ -11,6 +11,7 @@ const config: Config = {
             colors: {
                 primary: '#378ADD',
                 highlight: 'var(--color-highlight)',
+                'dark-highlight': 'var(--color-dark-highlight)',
             },
             fontFamily: {
                 sans: ['Inter', 'system-ui', 'sans-serif'],

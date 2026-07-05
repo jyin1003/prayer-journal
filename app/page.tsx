@@ -121,26 +121,18 @@ export default function Dashboard() {
                 >
                     People
                 </button>
-
-                {tab === 'prayers' && (
-                    <button
-                        onClick={() => setModal({ type: 'addPerson' })}
-                        className="ml-auto text-sm font-semibold px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 dark:text-gray-200"
-                    >
-                        + Add person
-                    </button>
-                )}
             </div>
 
             {tab === 'prayers' && (
                 <>
+                    <h2 className="text-s font-medium text-gray-700 dark:text-gray-400 mt-6 mb-2">People to pray for</h2>
                     {candidates.map(({ person, isRandom }) => (
                         <PersonCard key={person.id} person={person} isRandom={isRandom} onTick={handleTick}
                             onAddPoints={id => setModal({ type: 'addPoints', person: findPerson(id) })}
                             onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
                     ))}
 
-                    <h2 className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-6 mb-2">Time to catch up</h2>
+                    <h2 className="text-s font-medium text-gray-700 dark:text-gray-400 mt-6 mb-2">People to catch up with</h2>
                     {catchup.length > 0 ? (
                         catchup.map(({ person }) => (
                             <PersonCard key={person.id} person={person} onTick={handleTick}
@@ -148,7 +140,7 @@ export default function Dashboard() {
                                 onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
                         ))
                     ) : (
-                        <p className="text-sm text-gray-400 dark:text-gray-500">None so far :)</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-500">None so far :))</p>
                     )}
                 </>
             )}
@@ -165,7 +157,7 @@ export default function Dashboard() {
                         />
                         <button
                             onClick={() => setModal({ type: 'addPerson' })}
-                            className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 text-white"
+                            className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full bg-highlight hover:bg-dark-highlight text-black"
                             aria-label="Add person"
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
