@@ -27,3 +27,17 @@ export interface PersonWithEntries extends Person {
     entries: Entry[]
     ticks: Tick[]
 }
+
+export interface PrayerSlot {
+    person_id: string
+    is_random: boolean
+}
+
+export interface DailySelection {
+    id: string
+    user_id: string
+    date: string
+    prayer_slots: PrayerSlot[]
+    catchup_ids: string[]
+    created_at: string
+}

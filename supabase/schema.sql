@@ -30,3 +30,20 @@ alter table ticks enable row level security;
 create policy "own people" on people for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "own entries" on entries for all using (exists (select 1 from people where people.id = entries.person_id and people.user_id = auth.uid())) with check (exists (select 1 from people where people.id = entries.person_id and people.user_id = auth.uid()));
 create policy "own ticks" on ticks for all using (exists (select 1 from people where people.id = ticks.person_id and people.user_id = auth.uid())) with check (exists (select 1 from people where people.id = ticks.person_id and people.user_id = auth.uid()));
+
+create table daily_selections (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) not null,
+  date date not null,
+  prayer_slots jsonb not null default '[]'::jsonb,
+  catchup_ids jsonb not null default '[]'::jsonb,
+  created_at timestamptz default now(),
+  unique (user_id, date)
+);
+
+alter table daily_selections enable row level security;
+
+create policy "own daily_selections" on daily_selections
+  for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);

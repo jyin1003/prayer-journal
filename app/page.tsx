@@ -2,14 +2,15 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { PersonWithEntries, Status } from '@/lib/types'
-import { getPrayerCandidates, getCatchupPeople } from '@/lib/logic'
+import { PersonWithEntries, Status, DailySelection } from '@/lib/types'
+import { filterPrayerDisplay, filterCatchupDisplay } from '@/lib/logic'
 import PersonCard from '@/components/PersonCard'
 import Modal, { ModalState } from '@/components/Modal'
 import HistoryModal from '@/components/HistoryModal'
 
 export default function Dashboard() {
     const [people, setPeople] = useState<PersonWithEntries[]>([])
+    const [dailySelection, setDailySelection] = useState<DailySelection | null>(null)
     const [tab, setTab] = useState<'prayers' | 'people'>('prayers')
     const [modal, setModal] = useState<ModalState | null>(null)
     const [historyPersonId, setHistoryPersonId] = useState<string | null>(null)
@@ -39,7 +40,13 @@ export default function Dashboard() {
         if (res.ok) setPeople(await res.json())
         setLoading(false)
     }
-    useEffect(() => { load() }, [])
+
+    async function loadDailySelection() {
+        const res = await fetch('/api/daily-selection')
+        if (res.ok) setDailySelection(await res.json())
+    }
+
+    useEffect(() => { load(); loadDailySelection() }, [])
 
     async function handleTick(personId: string, entryDate: string, pointIdx: number, ticked: boolean) {
         await fetch('/api/ticks', { method: ticked ? 'DELETE' : 'POST', body: JSON.stringify({ person_id: personId, entry_date: entryDate, point_index: pointIdx }) })
@@ -66,13 +73,13 @@ export default function Dashboard() {
         window.location.href = '/login'
     }
 
-    if (loading) return (
+    if (loading || !dailySelection) return (
         <div className="min-h-screen flex items-center justify-center text-sm text-gray-400 dark:bg-gray-900 dark:text-gray-500">
             Loading…
         </div>
     )
-    const candidates = getPrayerCandidates(people)
-    const catchup = getCatchupPeople(people)
+    const candidates = filterPrayerDisplay(people, dailySelection.prayer_slots)
+    const catchup = filterCatchupDisplay(people, dailySelection.catchup_ids)
     const findPerson = (id: string) => people.find(p => p.id === id)!
     const filteredPeople = people.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
     const historyPerson = historyPersonId ? findPerson(historyPersonId) : null
@@ -183,7 +190,7 @@ export default function Dashboard() {
             )}
 
             {historyPerson && (
-                <HistoryModal person={historyPerson} onClose={() => setHistoryPersonId(null)} />
+                <HistoryModal person={historyPerson} onClose={() => setHistoryPersonId(null)} onTick={handleTick} />
             )}
         </div>
     )

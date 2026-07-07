@@ -5,9 +5,10 @@ import { isPointTicked, initials, avatarColor, fmtDate } from '@/lib/logic'
 interface Props {
     person: PersonWithEntries
     onClose: () => void
+    onTick: (personId: string, entryDate: string, pointIdx: number, ticked: boolean) => void
 }
 
-export default function HistoryModal({ person, onClose }: Props) {
+export default function HistoryModal({ person, onClose, onTick }: Props) {
     const [bg, fg] = avatarColor(person.name)
     const entries = [...person.entries].sort((a, b) => b.date.localeCompare(a.date))
 
@@ -41,12 +42,17 @@ export default function HistoryModal({ person, onClose }: Props) {
                                 {entry.points.map((pt, i) => {
                                     const ticked = isPointTicked(person.ticks, person.id, entry.date, i)
                                     return (
-                                        <div key={i} className="flex items-start gap-2.5">
-                                            <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${ticked ? 'bg-green-400' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                                        <label key={i} className="flex items-start gap-2.5 cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                checked={ticked}
+                                                onChange={() => onTick(person.id, entry.date, i, ticked)}
+                                                className="mt-0.5"
+                                            />
                                             <span className={`text-sm leading-snug ${ticked ? 'line-through text-gray-400 dark:text-gray-600' : 'text-gray-700 dark:text-gray-200'}`}>
                                                 {pt}
                                             </span>
-                                        </div>
+                                        </label>
                                     )
                                 })}
                             </div>

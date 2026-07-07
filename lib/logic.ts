@@ -1,4 +1,4 @@
-import { PersonWithEntries, Entry, Tick } from './types'
+import { PersonWithEntries, Entry, Tick, Status, PrayerSlot } from './types'
 
 export function getLatestEntry(person: PersonWithEntries): Entry | null {
     if (!person.entries?.length) return null
@@ -11,17 +11,21 @@ export function isPointTicked(ticks: Tick[], personId: string, entryDate: string
     )
 }
 
-export function hasUnticked(person: PersonWithEntries): boolean {
+// Any entry (not just latest) has an unticked point
+export function hasAnyUnticked(person: PersonWithEntries): boolean {
     if (person.status === 'archived') return false
-    const entry = getLatestEntry(person)
-    if (!entry || !entry.points.length) return false
-    return entry.points.some((_, i) => !isPointTicked(person.ticks, person.id, entry.date, i))
+    if (!person.entries?.length) return false
+    return person.entries.some(entry =>
+        entry.points.some((_, i) => !isPointTicked(person.ticks, person.id, entry.date, i))
+    )
 }
 
-export function allLatestTicked(person: PersonWithEntries): boolean {
-    const entry = getLatestEntry(person)
-    if (!entry || !entry.points.length) return false
-    return entry.points.every((_, i) => isPointTicked(person.ticks, person.id, entry.date, i))
+// Every point across every entry is ticked
+export function isFullyTicked(person: PersonWithEntries): boolean {
+    if (!person.entries?.length) return false
+    return person.entries.every(entry =>
+        entry.points.every((_, i) => isPointTicked(person.ticks, person.id, entry.date, i))
+    )
 }
 
 export function weeksAgo(dateStr: string): number {
@@ -29,52 +33,101 @@ export function weeksAgo(dateStr: string): number {
     return Math.floor(diff / (7 * 24 * 60 * 60 * 1000))
 }
 
-export function getPrayerCandidates(people: PersonWithEntries[]): { person: PersonWithEntries; isRandom: boolean }[] {
-    const frequent = people.filter(p => p.status === 'frequent' && hasUnticked(p))
-    const longterm = people.filter(p => p.status === 'longterm' && hasUnticked(p))
-
-    const shuffle = <T>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5)
-    const sFrequent = shuffle(frequent)
-    const sLongterm = shuffle(longterm)
-
-    const slots: { person: PersonWithEntries; isRandom: boolean }[] = []
-    let fi = 0, li = 0
-
-    while (slots.length < 3 && (fi < sFrequent.length || li < sLongterm.length)) {
-        if (fi < sFrequent.length) {
-            slots.push({ person: sFrequent[fi++], isRandom: false })
-        }
-        if (slots.length < 3 && li < sLongterm.length && Math.random() < 0.25) {
-            slots.push({ person: sLongterm[li++], isRandom: false })
-        } else if (slots.length < 3 && fi >= sFrequent.length && li < sLongterm.length) {
-            slots.push({ person: sLongterm[li++], isRandom: false })
-        }
-    }
-
-    // Fill remaining slots with random people (even ticked ones)
-    if (slots.length < 3) {
-        const usedIds = new Set(slots.map(s => s.person.id))
-        const rest = shuffle(people.filter(p => p.status !== 'archived' && !usedIds.has(p.id) && getLatestEntry(p)))
-        for (const p of rest) {
-            if (slots.length >= 3) break
-            slots.push({ person: p, isRandom: true })
-        }
-    }
-
-    return slots.slice(0, 3)
+export function prayerEligible(person: PersonWithEntries): boolean {
+    return (person.status === 'frequent' || person.status === 'longterm') && hasAnyUnticked(person)
 }
 
-export function getCatchupPeople(people: PersonWithEntries[]): { person: PersonWithEntries; weeks: number }[] {
-    return people
-        .filter(p => {
-            if (p.status === 'archived') return false
-            const entry = getLatestEntry(p)
-            if (!entry) return false
-            const weeks = weeksAgo(entry.date)
-            const threshold = p.status === 'longterm' ? 12 : 3
-            return weeks >= threshold && allLatestTicked(p)
+export function catchupEligible(person: PersonWithEntries): boolean {
+    if (person.status === 'archived') return false
+    const entry = getLatestEntry(person)
+    if (!entry) return false
+    const threshold = person.status === 'longterm' ? 12 : 3
+    return weeksAgo(entry.date) >= threshold && isFullyTicked(person)
+}
+
+const STATUS_PRIORITY: Record<Status, number> = { frequent: 0, longterm: 1, archived: 2 }
+
+// --- Generation (run once per day, server-side) ---
+
+export function generatePrayerSlots(
+    people: PersonWithEntries[],
+    carryover: PrayerSlot[],
+    target = 3
+): PrayerSlot[] {
+    const slots: PrayerSlot[] = [...carryover]
+    const usedIds = new Set(slots.map(s => s.person_id))
+
+    const shuffle = <T>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5)
+
+    const frequentPool = shuffle(people.filter(p => p.status === 'frequent' && prayerEligible(p) && !usedIds.has(p.id)))
+    const longtermPool = shuffle(people.filter(p => p.status === 'longterm' && prayerEligible(p) && !usedIds.has(p.id)))
+
+    let fi = 0, li = 0
+    while (slots.length < target && (fi < frequentPool.length || li < longtermPool.length)) {
+        if (fi < frequentPool.length) {
+            const p = frequentPool[fi++]
+            slots.push({ person_id: p.id, is_random: false })
+            usedIds.add(p.id)
+        }
+        if (slots.length < target && li < longtermPool.length && Math.random() < 0.25) {
+            const p = longtermPool[li++]
+            slots.push({ person_id: p.id, is_random: false })
+            usedIds.add(p.id)
+        } else if (slots.length < target && fi >= frequentPool.length && li < longtermPool.length) {
+            const p = longtermPool[li++]
+            slots.push({ person_id: p.id, is_random: false })
+            usedIds.add(p.id)
+        }
+    }
+
+    if (slots.length < target) {
+        const rest = shuffle(people.filter(p => p.status !== 'archived' && !usedIds.has(p.id) && getLatestEntry(p)))
+        for (const p of rest) {
+            if (slots.length >= target) break
+            slots.push({ person_id: p.id, is_random: true })
+            usedIds.add(p.id)
+        }
+    }
+
+    return slots.slice(0, target)
+}
+
+export function generateCatchupIds(people: PersonWithEntries[], target = 3): string[] {
+    const eligible = people.filter(catchupEligible)
+    eligible.sort((a, b) => {
+        const pa = STATUS_PRIORITY[a.status], pb = STATUS_PRIORITY[b.status]
+        if (pa !== pb) return pa - pb
+        return weeksAgo(getLatestEntry(b)!.date) - weeksAgo(getLatestEntry(a)!.date)
+    })
+    return eligible.slice(0, target).map(p => p.id)
+}
+
+// --- Display (run on every render, filters the frozen daily lists live) ---
+
+export function filterPrayerDisplay(
+    people: PersonWithEntries[],
+    slots: PrayerSlot[]
+): { person: PersonWithEntries; isRandom: boolean }[] {
+    return slots
+        .map(s => {
+            const person = people.find(p => p.id === s.person_id)
+            if (!person || !prayerEligible(person)) return null
+            return { person, isRandom: s.is_random }
         })
-        .map(p => ({ person: p, weeks: weeksAgo(getLatestEntry(p)!.date) }))
+        .filter((x): x is { person: PersonWithEntries; isRandom: boolean } => x !== null)
+}
+
+export function filterCatchupDisplay(
+    people: PersonWithEntries[],
+    ids: string[]
+): { person: PersonWithEntries; weeks: number }[] {
+    return ids
+        .map(id => {
+            const person = people.find(p => p.id === id)
+            if (!person || !catchupEligible(person)) return null
+            return { person, weeks: weeksAgo(getLatestEntry(person)!.date) }
+        })
+        .filter((x): x is { person: PersonWithEntries; weeks: number } => x !== null)
         .sort((a, b) => b.weeks - a.weeks)
 }
 
