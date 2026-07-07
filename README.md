@@ -38,3 +38,4 @@
  ## To Do
 - faster response after ticking
 - fix dark logo
+- cleanup daily selections
