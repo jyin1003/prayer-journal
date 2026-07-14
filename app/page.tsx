@@ -49,8 +49,38 @@ export default function Dashboard() {
     useEffect(() => { load(); loadDailySelection() }, [])
 
     async function handleTick(personId: string, entryDate: string, pointIdx: number, ticked: boolean) {
-        await fetch('/api/ticks', { method: ticked ? 'DELETE' : 'POST', body: JSON.stringify({ person_id: personId, entry_date: entryDate, point_index: pointIdx }) })
-        load()
+        // Optimistic update — flip the UI instantly, don't wait on the network
+        setPeople(prev => prev.map(p => {
+            if (p.id !== personId) return p
+            if (ticked) {
+                return {
+                    ...p,
+                    ticks: p.ticks.filter(t => !(t.person_id === personId && t.entry_date === entryDate && t.point_index === pointIdx))
+                }
+            }
+            return {
+                ...p,
+                ticks: [...p.ticks, {
+                    id: `temp-${personId}-${entryDate}-${pointIdx}`,
+                    person_id: personId,
+                    entry_date: entryDate,
+                    point_index: pointIdx,
+                    created_at: new Date().toISOString(),
+                }]
+            }
+        }))
+
+        try {
+            const res = await fetch('/api/ticks', {
+                method: ticked ? 'DELETE' : 'POST',
+                body: JSON.stringify({ person_id: personId, entry_date: entryDate, point_index: pointIdx })
+            })
+            if (!res.ok) throw new Error('Tick request failed')
+        } catch (err) {
+            console.error(err)
+            // Something went wrong server-side — pull the real state back down
+            load()
+        }
     }
     async function handleAddPerson(name: string, status: Status, points: string[]) {
         await fetch('/api/people', { method: 'POST', body: JSON.stringify({ name, status, points }) })

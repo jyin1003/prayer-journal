@@ -19,8 +19,16 @@ body {
 
 input[type="checkbox"] {
     accent-color: #378ADD;
-    width: 17px;
-    height: 17px;
+    width: 22px;
+    height: 22px;
     cursor: pointer;
     flex-shrink: 0;
+}
+
+/* Prevent iOS Safari from auto-zooming when a form field is focused
+   (triggers on any input/textarea/select with font-size < 16px) */
+input,
+textarea,
+select {
+    font-size: 16px !important;
 }
