@@ -39,5 +39,6 @@ export interface DailySelection {
     date: string
     prayer_slots: PrayerSlot[]
     catchup_ids: string[]
+    fallback_slots: PrayerSlot[] | null
     created_at: string
 }

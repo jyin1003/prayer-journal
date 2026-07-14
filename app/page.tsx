@@ -108,7 +108,7 @@ export default function Dashboard() {
             Loading…
         </div>
     )
-    const candidates = filterPrayerDisplay(people, dailySelection.prayer_slots)
+    const candidates = filterPrayerDisplay(people, dailySelection.prayer_slots, dailySelection.fallback_slots)
     const catchup = filterCatchupDisplay(people, dailySelection.catchup_ids)
     const findPerson = (id: string) => people.find(p => p.id === id)!
     const filteredPeople = people.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))

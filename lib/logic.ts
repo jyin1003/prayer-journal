@@ -37,6 +37,30 @@ export function prayerEligible(person: PersonWithEntries): boolean {
     return (person.status === 'frequent' || person.status === 'longterm') && hasAnyUnticked(person)
 }
 
+// Most recent tick timestamp for a person. Never-ticked people are treated
+// as maximally stale (-Infinity) so they surface first in the fallback list.
+export function lastTickTime(person: PersonWithEntries): number {
+    if (!person.ticks?.length) return -Infinity
+    return Math.max(...person.ticks.map(t => new Date(t.created_at).getTime()))
+}
+
+// Eligible for the "everyone's done" fallback list: has prayer points at all,
+// regardless of tick status.
+export function fallbackEligible(person: PersonWithEntries): boolean {
+    return (person.status === 'frequent' || person.status === 'longterm') && !!getLatestEntry(person)
+}
+
+export function generateFallbackSlots(
+    people: PersonWithEntries[],
+    excludeIds: Set<string>,
+    target = 3
+): PrayerSlot[] {
+    const pool = people
+        .filter(p => fallbackEligible(p) && !excludeIds.has(p.id))
+        .sort((a, b) => lastTickTime(a) - lastTickTime(b)) // oldest tick first
+    return pool.slice(0, target).map(p => ({ person_id: p.id, is_random: true }))
+}
+
 export function catchupEligible(person: PersonWithEntries): boolean {
     if (person.status === 'archived') return false
     const entry = getLatestEntry(person)
@@ -106,13 +130,25 @@ export function generateCatchupIds(people: PersonWithEntries[], target = 3): str
 
 export function filterPrayerDisplay(
     people: PersonWithEntries[],
-    slots: PrayerSlot[]
+    slots: PrayerSlot[],
+    fallbackSlots: PrayerSlot[] | null
 ): { person: PersonWithEntries; isRandom: boolean }[] {
-    return slots
+    const real = slots
         .map(s => {
             const person = people.find(p => p.id === s.person_id)
             if (!person || !prayerEligible(person)) return null
             return { person, isRandom: s.is_random }
+        })
+        .filter((x): x is { person: PersonWithEntries; isRandom: boolean } => x !== null)
+
+    if (real.length > 0) return real
+    if (!fallbackSlots?.length) return []
+
+    return fallbackSlots
+        .map(s => {
+            const person = people.find(p => p.id === s.person_id)
+            if (!person) return null
+            return { person, isRandom: true }
         })
         .filter((x): x is { person: PersonWithEntries; isRandom: boolean } => x !== null)
 }

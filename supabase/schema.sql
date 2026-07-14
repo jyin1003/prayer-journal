@@ -37,6 +37,7 @@ create table daily_selections (
   date date not null,
   prayer_slots jsonb not null default '[]'::jsonb,
   catchup_ids jsonb not null default '[]'::jsonb,
+  fallback_slots jsonb default null,
   created_at timestamptz default now(),
   unique (user_id, date)
 );
