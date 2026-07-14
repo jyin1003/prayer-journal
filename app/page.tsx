@@ -163,11 +163,15 @@ export default function Dashboard() {
             {tab === 'prayers' && (
                 <>
                     <h2 className="text-s font-medium text-gray-700 dark:text-gray-400 mt-6 mb-2">People to pray for</h2>
-                    {candidates.map(({ person, isRandom }) => (
-                        <PersonCard key={person.id} person={person} isRandom={isRandom} onTick={handleTick}
-                            onAddPoints={id => setModal({ type: 'addPoints', person: findPerson(id) })}
-                            onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
-                    ))}
+                    {candidates.length > 0 ? (
+                        candidates.map(({ person, isRandom }) => (
+                            <PersonCard key={person.id} person={person} isRandom={isRandom} onTick={handleTick}
+                                onAddPoints={id => setModal({ type: 'addPoints', person: findPerson(id) })}
+                                onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
+                        ))
+                    ) : (
+                        <p className="text-sm text-gray-400 dark:text-gray-500">Finished for today :)</p>
+                    )}
 
                     <h2 className="text-s font-medium text-gray-700 dark:text-gray-400 mt-6 mb-2">People to catch up with</h2>
                     {catchup.length > 0 ? (

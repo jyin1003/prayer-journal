@@ -37,4 +37,3 @@
 
  ## To Do
 - fix dark logo
-- cleanup daily selections
