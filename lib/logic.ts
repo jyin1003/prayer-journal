@@ -159,22 +159,25 @@ export function filterPrayerDisplay(
     slots: PrayerSlot[],
     fallbackSlots: PrayerSlot[] | null
 ): { person: PersonWithEntries; isRandom: boolean }[] {
-    const real = slots
+    // Once fallback suggestions have been generated for the day, they're
+    // final. New points added later (e.g. via Catch-up) may make someone in
+    // the real prayer_slots eligible again, but that shouldn't switch the
+    // view back — today already moved into "suggestions" mode.
+    if (fallbackSlots?.length) {
+        return fallbackSlots
+            .map(s => {
+                const person = people.find(p => p.id === s.person_id)
+                if (!person) return null
+                return { person, isRandom: true }
+            })
+            .filter((x): x is { person: PersonWithEntries; isRandom: boolean } => x !== null)
+    }
+
+    return slots
         .map(s => {
             const person = people.find(p => p.id === s.person_id)
             if (!person || !prayerEligible(person)) return null
             return { person, isRandom: s.is_random }
-        })
-        .filter((x): x is { person: PersonWithEntries; isRandom: boolean } => x !== null)
-
-    if (real.length > 0) return real
-    if (!fallbackSlots?.length) return []
-
-    return fallbackSlots
-        .map(s => {
-            const person = people.find(p => p.id === s.person_id)
-            if (!person) return null
-            return { person, isRandom: true }
         })
         .filter((x): x is { person: PersonWithEntries; isRandom: boolean } => x !== null)
 }
