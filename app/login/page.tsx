@@ -31,17 +31,21 @@ export default function LoginPage() {
             if (error) setError(error.message)
             else window.location.href = '/'
         } else {
-            const { data, error } = await supabase.auth.signUp({ email: trimmedEmail, password })
-            if (error) {
-                setError(error.message)
-            } else if (data.session) {
-                window.location.href = '/'
-            } else if (data.user && data.user.identities?.length === 0) {
-                // Supabase's signal for "this email is already registered"
-                // when enumeration protection is on — no error is thrown
-                setError('An account with this email already exists. Try signing in instead.')
-            } else {
-                setError('Check your email to confirm your account before signing in.')
+            try {
+                const res = await fetch('/api/signup', {
+                    method: 'POST',
+                    body: JSON.stringify({ email: trimmedEmail, password }),
+                })
+                const body = await res.json()
+                if (!res.ok) {
+                    setError(body.error || 'Something went wrong')
+                } else {
+                    const { error } = await supabase.auth.signInWithPassword({ email: trimmedEmail, password })
+                    if (error) setError(error.message)
+                    else { window.location.href = '/'; return } // skip setLoading(false) on success, we're navigating away
+                }
+            } catch {
+                setError('Something went wrong. Please try again.')
             }
         }
         setLoading(false)
