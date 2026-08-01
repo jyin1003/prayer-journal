@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { PersonWithEntries, PrayerSlot } from '@/lib/types'
-import { generatePrayerSlots, generateCatchupIds, generateFallbackSlots, prayerEligible, todayStr } from '@/lib/logic'
+import { generatePrayerSlots, generateFallbackSlots, prayerEligible, todayStr } from '@/lib/logic'
 
 export async function GET() {
     const supabase = createClient()
@@ -45,7 +45,6 @@ export async function GET() {
         })
 
         const prayerSlots = generatePrayerSlots(people, carryover, 3)
-        const catchupIds = generateCatchupIds(people, 3)
 
         const { data: inserted, error: insertErr } = await supabase
             .from('daily_selections')

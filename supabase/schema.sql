@@ -48,3 +48,16 @@ create policy "own daily_selections" on daily_selections
   for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+create table catchup_state (
+user_id uuid primary key references auth.users(id),
+person_ids jsonb not null default '[]'::jsonb,
+updated_at timestamptz default now()
+);
+
+alter table catchup_state enable row level security;
+
+create policy "own catchup_state" on catchup_state
+  for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);

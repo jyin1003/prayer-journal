@@ -73,7 +73,7 @@ const STATUS_PRIORITY: Record<Status, number> = { frequent: 0, longterm: 1, arch
 
 // --- Generation (run once per day, server-side) ---
 
-export function generatePrayerSlots(
+export function generatePrayerSlots( // unused
     people: PersonWithEntries[],
     carryover: PrayerSlot[],
     target = 3
@@ -124,6 +124,32 @@ export function generateCatchupIds(people: PersonWithEntries[], target = 3): str
         return weeksAgo(getLatestEntry(b)!.date) - weeksAgo(getLatestEntry(a)!.date)
     })
     return eligible.slice(0, target).map(p => p.id)
+}
+
+// Keeps survivors from the current list as-is; only pulls in replacements
+// for slots vacated by people who are no longer catchup-eligible.
+export function backfillCatchupIds(
+    people: PersonWithEntries[],
+    currentIds: string[],
+    target = 3
+): string[] {
+    const survivors = currentIds.filter(id => {
+        const p = people.find(pp => pp.id === id)
+        return !!p && catchupEligible(p)
+    })
+    if (survivors.length >= target) return survivors.slice(0, target)
+
+    const excludeIds = new Set(survivors)
+    const pool = people
+        .filter(p => catchupEligible(p) && !excludeIds.has(p.id))
+        .sort((a, b) => {
+            const pa = STATUS_PRIORITY[a.status], pb = STATUS_PRIORITY[b.status]
+            if (pa !== pb) return pa - pb
+            return weeksAgo(getLatestEntry(b)!.date) - weeksAgo(getLatestEntry(a)!.date)
+        })
+
+    const needed = target - survivors.length
+    return [...survivors, ...pool.slice(0, needed).map(p => p.id)]
 }
 
 // --- Display (run on every render, filters the frozen daily lists live) ---

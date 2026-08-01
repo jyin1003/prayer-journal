@@ -8,7 +8,7 @@ interface Props {
     variant?: 'full' | 'compact'
     onTick?: (personId: string, entryDate: string, pointIdx: number, ticked: boolean) => void
     onAddPoints: (personId: string) => void
-    onEdit: (personId: string) => void
+    onEdit?: (personId: string) => void
     onCardClick?: (personId: string) => void
 }
 
@@ -52,13 +52,15 @@ export default function PersonCard({ person, isRandom, variant = 'full', onTick,
                     >
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
                     </button>
-                    <button
-                        onClick={() => onEdit(person.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-gray-100 transition-colors"
-                        aria-label="Edit person"
-                    >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                    </button>
+                    {onEdit && (
+                        <button
+                            onClick={() => onEdit(person.id)}
+                            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-gray-100 transition-colors"
+                            aria-label="Edit person"
+                        >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                        </button>
+                    )}
                 </div>
             </div>
 

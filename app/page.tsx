@@ -16,6 +16,7 @@ export default function Dashboard() {
     const [historyPersonId, setHistoryPersonId] = useState<string | null>(null)
     const [search, setSearch] = useState('')
     const [loading, setLoading] = useState(true)
+    const [catchupIds, setCatchupIds] = useState<string[] | null>(null)
     const router = useRouter()
     const supabase = createClient()
 
@@ -46,7 +47,12 @@ export default function Dashboard() {
         if (res.ok) setDailySelection(await res.json())
     }
 
-    useEffect(() => { load(); loadDailySelection() }, [])
+    async function loadCatchupSelection() {
+        const res = await fetch('/api/catchup-selection')
+        if (res.ok) setCatchupIds(await res.json())
+    }
+
+    useEffect(() => { load(); loadDailySelection(); loadCatchupSelection() }, [])
 
     async function handleTick(personId: string, entryDate: string, pointIdx: number, ticked: boolean) {
         // Optimistic update — flip the UI instantly, don't wait on the network
@@ -88,7 +94,8 @@ export default function Dashboard() {
     }
     async function handleAddPoints(personId: string, points: string[]) {
         await fetch('/api/entries', { method: 'POST', body: JSON.stringify({ person_id: personId, points }) })
-        load()
+        await load()
+        loadCatchupSelection()
     }
     async function handleEditPerson(personId: string, name: string, status: Status) {
         await fetch('/api/people', { method: 'PATCH', body: JSON.stringify({ id: personId, name, status }) })
@@ -103,14 +110,13 @@ export default function Dashboard() {
         window.location.href = '/login'
     }
 
-    if (loading || !dailySelection) return (
+    if (loading || !dailySelection || catchupIds === null) return (
         <div className="min-h-screen flex items-center justify-center text-sm text-gray-400 dark:bg-gray-900 dark:text-gray-500">
             Loading…
         </div>
     )
     const candidates = filterPrayerDisplay(people, dailySelection.prayer_slots, dailySelection.fallback_slots)
-    const catchup = filterCatchupDisplay(people, dailySelection.catchup_ids)
-    const findPerson = (id: string) => people.find(p => p.id === id)!
+    const catchup = filterCatchupDisplay(people, catchupIds)    const findPerson = (id: string) => people.find(p => p.id === id)!
     const filteredPeople = people.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
     const historyPerson = historyPersonId ? findPerson(historyPersonId) : null
 
@@ -166,8 +172,7 @@ export default function Dashboard() {
                     {candidates.length > 0 ? (
                         candidates.map(({ person, isRandom }) => (
                             <PersonCard key={person.id} person={person} isRandom={isRandom} onTick={handleTick}
-                                onAddPoints={id => setModal({ type: 'addPoints', person: findPerson(id) })}
-                                onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
+                                onAddPoints={id => setModal({ type: 'addPoints', person: findPerson(id) })} />
                         ))
                     ) : (
                         <p className="text-sm text-gray-400 dark:text-gray-500">Finished for today :)</p>
@@ -175,10 +180,11 @@ export default function Dashboard() {
 
                     <h2 className="text-s font-medium text-gray-700 dark:text-gray-400 mt-6 mb-2">People to catch up with</h2>
                     {catchup.length > 0 ? (
+                        // Catchup cards — compact, no checklist, click opens history:
                         catchup.map(({ person }) => (
-                            <PersonCard key={person.id} person={person} onTick={handleTick}
+                            <PersonCard key={person.id} person={person} variant="compact"
                                 onAddPoints={id => setModal({ type: 'addPoints', person: findPerson(id) })}
-                                onEdit={id => setModal({ type: 'editPerson', person: findPerson(id) })} />
+                                onCardClick={setHistoryPersonId} />
                         ))
                     ) : (
                         <p className="text-sm text-gray-400 dark:text-gray-500">None so far :))</p>
