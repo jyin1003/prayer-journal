@@ -48,7 +48,7 @@ export async function GET() {
 
         const { data: inserted, error: insertErr } = await supabase
             .from('daily_selections')
-            .insert({ user_id: user.id, date: today, prayer_slots: prayerSlots, catchup_ids: catchupIds })
+            .insert({ user_id: user.id, date: today, prayer_slots: prayerSlots })
             .select()
             .single()
 
