@@ -9,49 +9,42 @@ export default function LoginPage() {
     const [mode, setMode] = useState<'login' | 'signup'>('login')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
-    const [magicSent, setMagicSent] = useState(false)
     const router = useRouter()
     const supabase = createClient()
 
     async function handleSubmit() {
         setError('')
+
+        const trimmedEmail = email.trim()
+        if (!trimmedEmail || !password) {
+            setError('Enter an email and password')
+            return
+        }
+        if (mode === 'signup' && password.length < 6) {
+            setError('Password must be at least 6 characters')
+            return
+        }
+
         setLoading(true)
         if (mode === 'login') {
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-            console.log('login result:', { data, error })
+            const { error } = await supabase.auth.signInWithPassword({ email: trimmedEmail, password })
             if (error) setError(error.message)
-            else {
-                console.log('redirecting now...')
-                window.location.href = '/'
-            }
+            else window.location.href = '/'
         } else {
-            // ...unchanged
+            const { data, error } = await supabase.auth.signUp({ email: trimmedEmail, password })
+            if (error) {
+                setError(error.message)
+            } else if (data.session) {
+                window.location.href = '/'
+            } else if (data.user && data.user.identities?.length === 0) {
+                // Supabase's signal for "this email is already registered"
+                // when enumeration protection is on — no error is thrown
+                setError('An account with this email already exists. Try signing in instead.')
+            } else {
+                setError('Check your email to confirm your account before signing in.')
+            }
         }
         setLoading(false)
-    }
-
-    async function handleMagicLink() {
-        if (!email) { setError('Enter your email first'); return }
-        setLoading(true)
-        const { error } = await supabase.auth.signInWithOtp({
-            email,
-            options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
-        })
-        if (error) setError(error.message)
-        else setMagicSent(true)
-        setLoading(false)
-    }
-
-    if (magicSent) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-                <div className="bg-white rounded-2xl border border-gray-200 p-8 w-full max-w-sm text-center">
-                    <div className="text-3xl mb-4">✉️</div>
-                    <h1 className="text-lg font-medium mb-2">Check your email</h1>
-                    <p className="text-sm text-gray-500">We sent a magic link to <strong>{email}</strong>. Click it to sign in.</p>
-                </div>
-            </div>
-        )
     }
 
     return (
@@ -93,19 +86,6 @@ export default function LoginPage() {
                     className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2.5 text-sm font-medium disabled:opacity-50"
                 >
                     {loading ? 'Loading…' : mode === 'login' ? 'Sign in' : 'Create account'}
-                </button>
-
-                <div className="relative my-4">
-                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100" /></div>
-                    <div className="relative flex justify-center"><span className="bg-white px-2 text-xs text-gray-400">or</span></div>
-                </div>
-
-                <button
-                    onClick={handleMagicLink}
-                    disabled={loading}
-                    className="w-full border border-gray-200 hover:bg-gray-50 rounded-lg py-2.5 text-sm text-gray-600 disabled:opacity-50"
-                >
-                    Send magic link
                 </button>
 
                 <p className="text-center text-xs text-gray-400 mt-4">
